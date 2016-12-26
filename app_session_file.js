@@ -2,6 +2,8 @@
 var express = require('express');
 
 var session = require('express-session');  //세션을 사용하기 위해 선언
+var FileStore = require('session-file-store')(session);
+
 var bodyParser = require('body-parser');
 
 var app = express();
@@ -11,7 +13,8 @@ app.use(bodyParser.urlencoded({extended:false}));
 app.use(session({
     secret: '1112222333',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: true,
+    store : new FileStore()
 }))
 
 
@@ -85,6 +88,6 @@ app.get('/auth/login',function (req,res) {
 });
 
 
-app.listen(3003,function () {
+app.listen(3004,function () {
     console.log('Connected 3003 port!!');
 }); 

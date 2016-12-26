@@ -2,6 +2,17 @@
 var express = require('express');
 
 var session = require('express-session');  //세션을 사용하기 위해 선언
+var MySQLStore = require('express-mysql-session')(session);
+
+var options = {
+    host: 'localhost',
+    port: 3306,
+    user: 'session_test',
+    password: 'password',
+    database: 'session_test'
+};
+var sessionStore = new MySQLStore(options);
+
 var bodyParser = require('body-parser');
 
 var app = express();
@@ -11,7 +22,9 @@ app.use(bodyParser.urlencoded({extended:false}));
 app.use(session({
     secret: '1112222333',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: true,
+    store : sessionStore
+
 }))
 
 
@@ -27,7 +40,13 @@ app.get('/count',function (req,res) {
 
 app.get('/auth/logout',function (req,res) {
     delete req.session.displayName; //  세션을 삭제합니다
-    res.redirect('/welcome');
+
+    //디비에서 세션정보를 삭제한후에 리다이렉트해준다.
+    // 안해주면 시간차로 삭제가 되기 전에 리다이렉트가 실행됨
+    req.session.save(function () {
+        res.redirect('/welcome');
+    });
+
 });
 
 app.get('/welcome',function (req, res) {
@@ -58,7 +77,11 @@ app.post('/auth/login',function (req,res) {
 
     if(uname === user.username && pwd === user.password) {
         req.session.displayName = user.displayName;
-        res.redirect('/welcome');
+
+        req.session.save(function () {
+            res.redirect('/welcome');
+        });
+
     } else {
         res.send('Who are you? <a href="/auth/login" >login</a>');
     }
@@ -85,6 +108,6 @@ app.get('/auth/login',function (req,res) {
 });
 
 
-app.listen(3003,function () {
+app.listen(3004,function () {
     console.log('Connected 3003 port!!');
 }); 
